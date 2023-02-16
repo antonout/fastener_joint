@@ -1,9 +1,9 @@
 import pandas as pd
 from math import pi
 
-print(pd.__version__)
 
 def main():
+
     def read_joint_csv():
         # get the joint data
         return pd.read_csv("joint_1.csv")
@@ -12,11 +12,11 @@ def main():
         # get the loads data
         return pd.read_csv("loads_1.csv")
 
-    def fastener_loads_to_csv(df):
-        # save output data to csv
+    def fastener_loads_to_csv(df: pd.DataFrame):
+        # save fastener loads data to csv
         return df.to_csv("fastener_loads.csv", index=False)
 
-    def find_joint_centroid(joint_data):
+    def find_joint_centroid(joint_data: pd.DataFrame):
         # find the center of resistance of the joint
         joint_centroid = (
             joint_data["fastener_area_x_loc"].sum() / joint_data["fastener_area"].sum(),
@@ -24,7 +24,7 @@ def main():
         )
         return joint_centroid
 
-    def sum_loading_at_centroid(loads_data):
+    def sum_loading_at_centroid(loads_data: pd.DataFrame):
         # sum all centroid translated loading components
         sum_loading = (
             loads_data["load_px_c"].sum(),
@@ -124,7 +124,7 @@ def main():
         + (fastener_loads_df["fastener_p_vertical"]) ** 2
     ) ** 0.5
 
-    #fastener_loads_to_csv(fastener_loads_df)
+    fastener_loads_to_csv(fastener_loads_df)
 
 
 if __name__ == "__main__":
