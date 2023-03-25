@@ -19,7 +19,7 @@ class Interface(ctk.CTk, ABC):
     def build_main_window(self):
         # configure window
         self.title("Fastener Joint")
-        self.geometry("600x165")
+        self.geometry("600x130")
         self.resizable(width=False, height=False)
 
         self.grid_columnconfigure((0, 3), weight=0)
@@ -74,7 +74,9 @@ class Interface(ctk.CTk, ABC):
             text="Read/Check",
             command=lambda: self.read_check_input_data(),
         )
-        self.read_check_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="e")
+        self.read_check_button.grid(
+            row=2, column=0, columnspan=2, padx=5, pady=5, sticky="e"
+        )
 
         self.calculate_button = ctk.CTkButton(
             master=self,
@@ -82,18 +84,8 @@ class Interface(ctk.CTk, ABC):
             text="Calculate",
             command=lambda: self.fastener_loads_data_operations(),
         )
-        self.calculate_button.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="w")
-
-        # configure error message window
-        self.error_textbox = ctk.CTkEntry(
-            master=self,
-            width=590,
-            height=28,
-            state="disabled",
-            textvariable=self.error_message,
-        )
-        self.error_textbox.grid(
-            row=4, column=0, columnspan=4, padx=5, pady=5, sticky="s"
+        self.calculate_button.grid(
+            row=2, column=2, columnspan=2, padx=5, pady=5, sticky="w"
         )
 
     def browse_file(self, b_id):
@@ -116,7 +108,7 @@ class Interface(ctk.CTk, ABC):
                 self.loads_entry.configure(state="disabled")
 
         except ValueError:
-            self.error_message_gen("Error: Selected file is not a .csv file.")
+            print("Error: Selected file is not a .csv file.")
 
     def _read_joint_csv(self, *args):
         # get the joint data
@@ -124,12 +116,9 @@ class Interface(ctk.CTk, ABC):
         try:
             return pd.read_csv(self.joint_file_path.get())
         except pd.errors.ParserError:
-            self.error_message_gen(
-                "Error: Cannot parse joint file. Select a .csv file."
-            )
+            print("Error: Cannot parse joint file. Select a .csv file.")
             return None
         except FileNotFoundError:
-            self.error_message_gen("Error: Joint file not found.")
             return None
 
     def _read_loads_csv(self, *args):
@@ -138,12 +127,9 @@ class Interface(ctk.CTk, ABC):
         try:
             return pd.read_csv(self.loads_file_path.get())
         except pd.errors.ParserError:
-            self.error_message_gen(
-                "Error: Cannot parse loads file. Select a .csv file."
-            )
+            print("Error: Cannot parse loads file. Select a .csv file.")
             return None
         except FileNotFoundError:
-            self.error_message_gen("Error: Loads file not found.")
             return None
 
     def read_check_input_data(self, *args):
@@ -162,41 +148,46 @@ class Interface(ctk.CTk, ABC):
 
         # check joint data
         try:
+            joint_error_var = 0
             if input_data["joint"] is not None:
                 # check header
                 joint_header = pd.Index(
                     ["fastener_id", "fastener_x_loc", "fastener_y_loc", "fastener_dia"]
                 )
                 if input_data["joint"].columns.equals(joint_header) == False:
-                    # warning is not critical for execution, however does not remove error flag
-                    self.error_message_gen(
-                        "Warning: Joint file header is not compliant."
-                    )
+                    joint_error_var = 1
+                    raise ValueError
 
                 # check contents
                 # note: .isna() returns the masked df with bools, .any() returns Series of .isna() df
                 # second .any() returns the single bool value of Series
                 if input_data["joint"].isna().any().any():
-                    rows, cols = np.where(input_data["joint"].isna())
-                    for row, col in zip(rows, cols):
-                        print(
-                            f"NaN: row {input_data['joint'].index[row]+2}, column {input_data['joint'].columns[col]}"
-                        )
+                    joint_error_var = 2
                     raise ValueError
                 else:
                     # change flag to False
                     check_errors["joint_error"] = False
+                    print(f"Joint Valid! Dataset preview:\n{input_data['joint']}")
             else:
                 raise FileNotFoundError
 
         except ValueError:
-            self.error_message_gen("Error: Missed data in joint file.")
+            if joint_error_var == 1:
+                print("Error: Joint file header is not compliant.")
+            elif joint_error_var == 2:
+                print("Error: Missed data in joint file, see NaN.")
+                rows, cols = np.where(input_data["joint"].isna())
+                for row, col in zip(rows, cols):
+                    print(
+                        f"NaN Joint: row {input_data['joint'].index[row]+2}, column {input_data['joint'].columns[col]}"
+                    )
 
         except FileNotFoundError:
-            self.error_message_gen("Error: Joint file not found.")
+            print("Error: Joint file not found.")
 
         # check loads data
         try:
+            loads_error_var = 0
             if input_data["loads"] is not None:
                 # check header
                 loads_header = pd.Index(
@@ -210,40 +201,36 @@ class Interface(ctk.CTk, ABC):
                     ]
                 )
                 if input_data["loads"].columns.equals(loads_header) == False:
-                    # warning is not critical for execution, but does not remove an error flag
-                    self.error_message_gen(
-                        "Warning: Loads file header is not compliant."
-                    )
+                    loads_error_var = 1
+                    raise ValueError
 
                 # check contents
                 # same approach used in prev check
                 if input_data["loads"].isna().any().any():
-                    rows, cols = np.where(input_data["loads"].isna())
-                    for row, col in zip(rows, cols):
-                        print(
-                            f"NaN: row {input_data['loads'].index[row]+2}, column {input_data['loads'].columns[col]}"
-                        )
+                    loads_error_var = 2
                     raise ValueError
                 else:
                     # change flag to False
                     check_errors["loads_error"] = False
+                    print(f"Loads Valid! Dataset preview:\n{input_data['loads']}")
             else:
                 raise FileNotFoundError
 
         except ValueError:
-            self.error_message_gen("Error: Missed data in loads file.")
+            if loads_error_var == 1:
+                print("Error: Loads file header is not compliant.")
+            elif loads_error_var == 2:
+                print("Error: Missed data in loads file.")
+                rows, cols = np.where(input_data["loads"].isna())
+                for row, col in zip(rows, cols):
+                    print(
+                        f"NaN Loads: row {input_data['loads'].index[row]+2}, column {input_data['loads'].columns[col]}"
+                    )
 
         except FileNotFoundError:
-            self.error_message_gen("Error: Loads file not found.")
+            print("Error: Loads file not found.")
 
         return (input_data, check_errors)
-
-    def error_message_gen(self, error_msg):
-        # update the error field with the error messages
-        self.error_textbox.configure(state="normal")
-        self.error_textbox.delete(0, "end")
-        self.error_textbox.insert(0, error_msg)
-        self.error_textbox.configure(state="disabled")
 
     """abc methods implement operations with dataframes in main"""
 

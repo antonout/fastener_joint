@@ -178,11 +178,9 @@ def main():
                 ) ** 0.5
 
                 self.fastener_loads_data.to_csv("fastener_loads.csv", index=False)
+                print("Success!")
 
             else:
-                self.error_message_gen(
-                    "Error: Check input data. Use Read/Check for details."
-                )
                 return None
 
     app = FastenerJoint()
