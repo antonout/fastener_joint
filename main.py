@@ -121,6 +121,7 @@ def main():
 
         def fastener_loads_data_operations(self):
             # calculate fastener loading
+            self.calculate_button_pressed = True
             if (
                 type(self.joint_data_operations()) == pd.DataFrame
                 and type(self.loads_data_operations()) == tuple

@@ -14,6 +14,7 @@ class Interface(ctk.CTk, ABC):
         self.joint_file_path = tk.StringVar(value="")
         self.loads_file_path = tk.StringVar(value="")
         self.error_message = tk.StringVar(value="")
+        self.calculate_button_pressed = False
         self.build_main_window()
 
     def build_main_window(self):
@@ -167,7 +168,9 @@ class Interface(ctk.CTk, ABC):
                 else:
                     # change flag to False
                     check_errors["joint_error"] = False
-                    print(f"Joint Valid! Dataset preview:\n{input_data['joint']}")
+                    # do not print if calculate button is pressed
+                    if self.calculate_button_pressed == False:
+                        print(f"Joint Valid! Dataset preview:\n{input_data['joint']}")
             else:
                 raise FileNotFoundError
 
@@ -212,7 +215,9 @@ class Interface(ctk.CTk, ABC):
                 else:
                     # change flag to False
                     check_errors["loads_error"] = False
-                    print(f"Loads Valid! Dataset preview:\n{input_data['loads']}")
+                    # do not print if calculate button is pressed
+                    if self.calculate_button_pressed == False:
+                        print(f"Loads Valid! Dataset preview:\n{input_data['loads']}")
             else:
                 raise FileNotFoundError
 
